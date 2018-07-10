@@ -112,6 +112,7 @@ BYTE vnext0(void) {
       lines=hsynccounter;
       hsynccounter=0;
       if(lines == 258) ResumeThread(hdt);
+      ResumeThread(hdt);
     }
     q=0;
   }
