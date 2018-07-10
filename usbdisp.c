@@ -1,3 +1,4 @@
+// git変更テスト用追加コメント ←これ自体がそう
 #include <windows.h>
 
 #include "ftd2xx.h"
@@ -118,14 +119,23 @@ DWORD WINAPI vproc(LPVOID x) {
   //pvbuf1=vbuf;
   //pvbuf2=vbuf+vbufsize
 //  vlen=0;
+  while(1) { // 最初のVSYNCを待つ
+    ba0=a0;
+    a0 = vnext0();
+    if((ba0 & 0x20) == 0 && (a0 & 0x20) == 0x20) break;
+  }
+  hsynccounter=0;
+  hcounter=0;
+  
   while(1) {
+  vs0:
     ba0=a0; //ひとつ前のデータ
     a0 = vnext0();
     //垂直同期が来ていたら
     if((a0 & 0x20) == 0) {vbuf[vcounter]=a0;vcounter=0;continue;}
     else if((ba0 & 0x20) == 0) {//垂直同期の立ち上がり
-                                // ba0(前のデータ)が0で、
-                                //今読んだデータa0が0ではない
+      // ba0(前のデータ)が0で、
+      //今読んだデータa0が0ではない
       //ResumeThread(hht);
       // フレームを一つ置きに表示
       /*if(ff0 == 0) {
@@ -135,10 +145,32 @@ DWORD WINAPI vproc(LPVOID x) {
       else {
         ff0 == 0;
       }*/
-      ResumeThread(hht);
+      while(1) {
+        while((a0 = vnext0()) & 0x10 == 0x10) { // 水平フロントポーチ
+          if((a0 & 0x20) == 0) goto vs1;
+        }
+        while((a0 = vnext0()) & 0x10 == 0x0) { // 水平同期中
+          if((a0 & 0x20) == 0) goto vs1;
+        }
+        hcounter = 0;
+        while((a0 = vnext0()) & 0x10 == 0x10) {
+          if((a0 & 0x20) == 0) goto vs1;
+          if(hsynccounter<dheight&&hcounter<dwidth) {
+            hbuf[hsynccounter][hcounter++]=a0;
+          }
+        }
+        wid=hcounter;
+        hsynccounter++;
+      }
+    vs1:
+      lines=hsynccounter;
+      hsynccounter=0;
+      ResumeThread(hdt);
+      break;
+      //ResumeThread(hht);
     }
     
-    if(vcounter<vbufsize) vbuf[vcounter++]=a0;
+    //if(vcounter<vbufsize) vbuf[vcounter++]=a0;
   }
 }
 
