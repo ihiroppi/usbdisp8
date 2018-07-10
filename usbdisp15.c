@@ -7,8 +7,10 @@ int dheight=600;
 unsigned char *bytes;
 
 // 10 buffers
-#define bufs0 30000//#define bufs0    193536
-#define bufsize 300000//#define bufsize   193536*2
+//#define bufs0 10000 //bufs0 30000//#define bufs0    193536
+//#define bufsize 100000 //bufsize 300000//#define bufsize   193536*2
+#define bufs0 5000 //bufs0 30000//#define bufs0    193536
+#define bufsize 50000 //bufsize 300000//#define bufsize   193536*2
 
 
 #define vbufsize 392165
@@ -17,8 +19,8 @@ unsigned char *bytes;
 //int baud = 4255320;
 //int baud = 4290000; // 2017.4.3 今まで使ってたボーレート// 2016.12.10 10:40 試し
 //int baud = 4375400;    // 2017.4.3 13:10 ボーレートを上げてみた
-//int baud = 4414397;//    24kHz
-int baud = 2363962;  //    15kHz
+int baud = 2700000; //2363962;    // 2017.4.3 13:28 さらに上げて微調整してみた
+
 BYTE buf[bufsize];   //読み込みバッファ
 BYTE vbuf[vbufsize]; //フレーム生データ切り出しバッファ
 //BYTE vbuf[vbufsized];
@@ -89,6 +91,8 @@ void vringbufinit(void) {
 
 BYTE vnext0(void) {
   BYTE r0;
+  static int q=0,qq=0;
+  
   bvi0=vi0;
   vi0=vpointer/bufs0+1;
 
@@ -100,6 +104,30 @@ BYTE vnext0(void) {
     LeaveCriticalSection(&rcs);
   }
   r0=buf[vpointer++];
+  if((r0 & 0x20)==0) {
+    q=1;
+  }
+  else {
+    if(q==1) {
+      lines=hsynccounter;
+      hsynccounter=0;
+      if(lines == 258) ResumeThread(hdt);
+    }
+    q=0;
+  }
+  if((r0 & 0x10)==0) {
+    qq=1;
+  }
+  else {
+    if(qq==1) {
+      wid=hcounter;
+      hcounter=0;
+      hsynccounter++;
+    }
+    qq=0;
+    hcounter++;
+  }
+    
   if(vpointer > bufsize-1) {vpointer=0;}
 
   return r0;
@@ -111,34 +139,22 @@ DWORD WINAPI vproc(LPVOID x) {
   // フレームを一つ置きに表示するためのフリップフロップ変数
   int ff0;
 
-
   vringbufinit();
   vcounter=0;
   ff0=0;
   //pvbuf1=vbuf;
   //pvbuf2=vbuf+vbufsize
 //  vlen=0;
+  hsynccounter=0;
+  hcounter=0;
+  
   while(1) {
     ba0=a0; //ひとつ前のデータ
     a0 = vnext0();
-    //垂直同期が来ていたら
-    if((a0 & 0x20) == 0) {vbuf[vcounter]=a0;vcounter=0;continue;}
-    else if((ba0 & 0x20) == 0) {//垂直同期の立ち上がり
-                                // ba0(前のデータ)が0で、
-                                //今読んだデータa0が0ではない
-      //ResumeThread(hht);
-      // フレームを一つ置きに表示
-      /*if(ff0 == 0) {
-        ResumeThread(hht);
-        ff0 == 1;
-      }
-      else {
-        ff0 == 0;
-      }*/
-      ResumeThread(hht);
+    if(hsynccounter<dheight&&hcounter<dwidth) {
+      hbuf[hsynccounter][hcounter]=a0;
     }
-    
-    if(vcounter<vbufsize) vbuf[vcounter++]=a0;
+    //if(vcounter<vbufsize) vbuf[vcounter++]=a0;
   }
 }
 
@@ -186,8 +202,7 @@ DWORD WINAPI hproc(LPVOID x) {
 
       lines=hsynccounter;
       hsynccounter=0;
-      //if(lines==440) {ResumeThread(hdt);} //有効なライン数の時のみ 24kHz
-      
+      if(lines==258) {ResumeThread(hdt);} //有効なライン数の時のみ
       ResumeThread(hdt);
       SuspendThread(hht);
     }
@@ -273,6 +288,7 @@ LRESULT CALLBACK WndProc(HWND hwnd , UINT msg , WPARAM wp , LPARAM lp) {
     
     return 0;
   case WM_LBUTTONDOWN:
+    //MessageBox(0,"qqqq","",MB_OK);
     if(startflag==0) {
       //読み出しスレッドの準備
       buflen0=0;
@@ -289,11 +305,12 @@ LRESULT CALLBACK WndProc(HWND hwnd , UINT msg , WPARAM wp , LPARAM lp) {
       }
 
       //水平処理のスレッド準備
-      if((hht = CreateThread(NULL, 0, hproc, (LPVOID)0, 0, &htid)) == NULL) {
+/*      if((hht = CreateThread(NULL, 0, hproc, (LPVOID)0, 0, &htid)) == NULL) {
         MessageBox(0,"hht","",MB_OK);
         return 0;
       }
-
+*/
+  
       
       ghwnd = hwnd;
       //表示用スレッド準備
@@ -314,10 +331,10 @@ LRESULT CALLBACK WndProc(HWND hwnd , UINT msg , WPARAM wp , LPARAM lp) {
         return 0;
       }
       //スレッドの優先順位 hproc
-      if(0 == SetThreadPriority(hht, THREAD_PRIORITY_TIME_CRITICAL)) {
+      /*if(0 == SetThreadPriority(hht, THREAD_PRIORITY_TIME_CRITICAL)) {
         MessageBox(0,"h prio","",MB_OK);
         return 0;
-      }
+      }*/
       
     }
     return 0;
@@ -329,6 +346,8 @@ LRESULT CALLBACK WndProc(HWND hwnd , UINT msg , WPARAM wp , LPARAM lp) {
     else if(wp == 0x34) {baud +=100;}
     else if(wp == 0x35) {baud +=10;}
     else if(wp == 0x36) {baud++;}
+    else if(wp == 0x37) {baud -=1000;}
+    else if(wp == 0x38) {baud +=1000;}
     else if(wp == 0x39) {ZeroMemory(hbuf,620*900);} // ごみを消す
 
     fts = FT_SetBaudRate(hFt, baud);
@@ -339,10 +358,9 @@ LRESULT CALLBACK WndProc(HWND hwnd , UINT msg , WPARAM wp , LPARAM lp) {
   case WM_PAINT:
     hdc = BeginPaint(hwnd , &ps);
 
-    //BitBlt(hdc , 0 , 0 , dwidth, dheight , hBuffer , 0 , 0 , SRCCOPY);
-    StretchBlt(hdc , -50 , 0 , dwidth , dheight , hBuffer , 0 , 0 ,
+    StretchBlt(hdc , -50 , 0 , dwidth, dheight , hBuffer , 0 , 0 ,
                dwidth/1.1,dheight/1.9,SRCCOPY);
-    /* BOOL TextOut(
+   /* BOOL TextOut(
   HDC hdc,           // デバイスコンテキストのハンドル
   int nXStart,       // 開始位置（基準点）の x 座標
   int nYStart,       // 開始位置（基準点）の y 座標
@@ -372,12 +390,12 @@ int WINAPI WinMain(HINSTANCE hInstance , HINSTANCE hPrevInstance ,
   winc.hCursor		= LoadCursor(NULL , IDC_ARROW);
   winc.hbrBackground	= (HBRUSH)GetStockObject(WHITE_BRUSH);
   winc.lpszMenuName	= NULL;
-  winc.lpszClassName	= TEXT("USB DISP");
+  winc.lpszClassName	= TEXT("USBDISP");
   
   if (!RegisterClass(&winc)) {MessageBox(0, "opn", "",MB_OK);return -1;}
   
   hwnd = CreateWindow(
-    TEXT("USB DISP") , TEXT("USB DISP") ,
+    TEXT("USBDISP") , TEXT("USB DISP") ,
     WS_OVERLAPPEDWINDOW | WS_VISIBLE ,
     CW_USEDEFAULT , CW_USEDEFAULT ,
     dwidth,dheight,//dwidth , dheight ,
