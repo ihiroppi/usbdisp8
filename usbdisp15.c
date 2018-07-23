@@ -2,6 +2,11 @@
 
 #include "ftd2xx.h"
 
+// 2018.7.23 Mon. 1:05 Sunny my home
+// いったん縮小してから拡大して表示したらうまくぼけるかと
+// 思ったら、そう甘くなかった…
+// hmidbufferとかのコメントアウトはそのときのゴミ
+
 int dwidth=900;
 int dheight=600;
 unsigned char *bytes;
@@ -79,8 +84,8 @@ DWORD WINAPI readproc(LPVOID x) {
       EnterCriticalSection(&rcs);
       buflen0++;
       LeaveCriticalSection(&rcs);
-      //if(buflen0 >0) ResumeThread(hvt);
-      ResumeThread(hvt);
+      if(buflen0 >0) ResumeThread(hvt);
+      //ResumeThread(hvt);
     }
   }
 }
@@ -98,7 +103,7 @@ BYTE vnext0(void) {
 
   if(bvi0 != vi0) {
     //while(buflen0==0);
-    if(buflen0==0) SuspendThread(hvt);
+    if(buflen0<=0) SuspendThread(hvt);
     EnterCriticalSection(&rcs);
     buflen0--;
     LeaveCriticalSection(&rcs);
@@ -111,7 +116,7 @@ BYTE vnext0(void) {
     if(q==1) {
       lines=hsynccounter;
       hsynccounter=0;
-      if(lines == 258) ResumeThread(hdt);
+      //if(lines == 258) ResumeThread(hdt);
       ResumeThread(hdt);
     }
     q=0;
@@ -262,10 +267,11 @@ LRESULT CALLBACK WndProc(HWND hwnd , UINT msg , WPARAM wp , LPARAM lp) {
     hdc = GetDC(hwnd);
     hBitmap = CreateCompatibleBitmap(hdc, dwidth, dheight);
     hBuffer = CreateCompatibleDC(hdc);
-        
+    
     SelectObject(hBuffer , hBitmap);
     SelectObject(hBuffer , GetStockObject(NULL_PEN));
 
+    
     bh.biSize = sizeof(BITMAPINFOHEADER);
     bh.biWidth = dwidth;
     bh.biHeight = dheight;
