@@ -80,8 +80,8 @@ DWORD WINAPI readproc(LPVOID x) {
       EnterCriticalSection(&rcs);
       buflen0++;
       LeaveCriticalSection(&rcs);
-      //if(buflen0 >0) ResumeThread(hvt);
-      ResumeThread(hvt);
+      if(buflen0 >0) ResumeThread(hvt);
+      //ResumeThread(hvt);
     }
   }
 }
@@ -99,7 +99,7 @@ BYTE vnext0(void) {
 
   if(bvi0 != vi0) {
     //while(buflen0==0);
-    if(buflen0==0) SuspendThread(hvt);
+    if(buflen0<=0) SuspendThread(hvt);
     EnterCriticalSection(&rcs);
     buflen0--;
     LeaveCriticalSection(&rcs);
@@ -112,7 +112,8 @@ BYTE vnext0(void) {
     if(q==1) {
       lines=hsynccounter;
       hsynccounter=0;
-      if(lines == 448) ResumeThread(hdt);
+      //if(lines == 448) ResumeThread(hdt);
+      ResumeThread(hdt);
     }
     q=0;
   }
