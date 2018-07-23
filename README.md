@@ -1,6 +1,20 @@
 # usbdisp8
 USB DISPLAY for 8bit 8color RGBHV
 
+FT232HLのモジュールAE-FT232HLを用いて8bitパソコンの8色 RGBHVな信号を直接読んで
+映像を表示しようというものです。
+
+なお、AE-FT232HLの結線は下記のような前提で組んであります
+
+J2-7 AD0 ... R
+J2-8 AD1 ... G
+J2-9 AD2 ... B
+
+J2-11 AD4 ... H sync
+J2-12 AD5 ... V sync
+
+
+
 clがついてるftのlibファイルはclでのコンパイル用にコピー・リネームしたものでftのドライバに入ってるものと
 同一です。逆に普通の名前のlibはbcc用になんか変換したやつです
 
