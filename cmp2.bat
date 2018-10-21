@@ -1,0 +1,1 @@
+cl /O2 usbdisp15_mm.c FTD2XX.LIB user32.lib gdi32.lib legacy_stdio_definitions.lib
