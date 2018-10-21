@@ -325,10 +325,10 @@ LRESULT CALLBACK WndProc(HWND hwnd , UINT msg , WPARAM wp , LPARAM lp) {
     else if(wp == 0x37) {baud +=10;}
     else if(wp == 0x38) {baud++;}
     else if(wp == 0x39) {ZeroMemory(hbuf,620*900);} // Ç≤Ç›Çè¡Ç∑
-    else if(wp == 0x54) { ddw -=0.0001; }  // 'T'
+    else if(wp == 0x57) { ddw -=0.0001; }  // 'W'
     else if(wp == 0x45) { ddw -=0.001; }  // 'E'           à»ç~ âÊñ ÇÃçÇÇ≥ÅEïùÇÃí≤êÆ
     else if(wp == 0x52) { ddw +=0.001; }  // 'R'
-    else if(wp == 0x57) { ddw +=0.0001; }  // 'W'
+    else if(wp == 0x54) { ddw +=0.0001; }  // 'T'
     else if(wp == 0x53) { ddw -=0.0001; }  // 'S'
     else if(wp == 0x44) { ddh -=0.001; }  // 'D'
     else if(wp == 0x46) { ddh +=0.001; }  // 'F'
