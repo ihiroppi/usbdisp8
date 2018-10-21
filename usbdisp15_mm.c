@@ -329,10 +329,10 @@ LRESULT CALLBACK WndProc(HWND hwnd , UINT msg , WPARAM wp , LPARAM lp) {
     else if(wp == 0x45) { ddw -=0.001; }  // 'E'           à»ç~ âÊñ ÇÃçÇÇ≥ÅEïùÇÃí≤êÆ
     else if(wp == 0x52) { ddw +=0.001; }  // 'R'
     else if(wp == 0x54) { ddw +=0.0001; }  // 'T'
-    else if(wp == 0x53) { ddw -=0.0001; }  // 'S'
+    else if(wp == 0x53) { ddh -=0.0001; }  // 'S'
     else if(wp == 0x44) { ddh -=0.001; }  // 'D'
     else if(wp == 0x46) { ddh +=0.001; }  // 'F'
-    else if(wp == 0x47) { ddw +=0.0001; }  // 'G'
+    else if(wp == 0x47) { ddh +=0.0001; }  // 'G'
     
     fts = FT_SetBaudRate(hFt, baud);
     if(fts != FT_OK) {MessageBox(0,"sbr", "",MB_OK);return -1;}
